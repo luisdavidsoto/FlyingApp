@@ -20,8 +20,8 @@ h1{font-size:22px;margin:8px 0 4px}.s{color:#7b8494;font-size:14px}
 #bar{border-bottom:0;border-top:1px solid var(--bd);justify-content:space-between}
 #bar button{padding:6px 0;flex:1;font-size:20px;border:0;background:none}
 #ttl{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#stage{flex:1;overflow:auto;background:#6b7280;-webkit-overflow-scrolling:touch}
-#cv{display:block;margin:0 auto;background:#fff}
+#stage{flex:1;overflow:hidden;background:#6b7280;touch-action:none;position:relative;min-height:0}
+#cv{display:block;transform-origin:0 0}
 #pn{min-width:64px;text-align:center;font-size:14px}
 #sheet{display:none;position:fixed;left:0;right:0;bottom:0;top:12%;background:var(--bg);border-radius:16px 16px 0 0;box-shadow:0 -4px 24px #0006;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
 #sh{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd)}
@@ -45,7 +45,7 @@ textarea{height:60vh;resize:none}
   <p class="s">El manual del Cessna 172S ya viene incluido. Cuando tengas el del Tecnam, se añade aquí.</p>
 </div>
 <div id="viewer">
-  <div id="top"><button id="bk">←</button><div id="ttl"></div><button data-p="Calc" aria-label="Calculadoras">🧮</button><button id="zo">−</button><button id="zi">+</button></div>
+  <div id="top"><button id="bk">←</button><div id="ttl"></div><button id="fit" aria-label="Ajustar a pantalla">⤢</button><button data-p="Calc" aria-label="Calculadoras">🧮</button><button id="zo">−</button><button id="zi">+</button></div>
   <div id="stage"><canvas id="cv"></canvas></div>
   <div id="bar">
     <button data-p="Out" aria-label="Índice">☰</button>
@@ -105,22 +105,62 @@ async function openAc(id,bufIn,title){
     AIPS=id.startsWith('aip:')?Object.assign({done:true},(AIPIDX&&AIPIDX.airports[id.slice(4)])||{}):null;await render();loadOutline();
   }catch(e){alert('No se pudo abrir el PDF.')}
 }
+let vz=1,vtx=0,vty=0,fitMode=ls.get('fitmode','page'),PW=1,PH=1,vf=1,vk='',rst=null,pgObj=null,rdone={tx:0,ty:0,z:1,f:1};
+const S=$('#stage');
+const fitF=()=>{const W=S.clientWidth,H=S.clientHeight;return fitMode==='page'?Math.min(W/PW,H/PH):W/PW};
+const zMax=()=>Math.max(1,40/vf);
+function clampView(){const W=S.clientWidth,H=S.clientHeight,k=vf*vz,pw=PW*k,ph=PH*k;
+  vtx=pw<=W?(W-pw)/2:Math.min(0,Math.max(W-pw,vtx));vty=ph<=H?(H-ph)/2:Math.min(0,Math.max(H-ph,vty))}
 async function render(){
   if(!pdf)return;page=Math.max(1,Math.min(pdf.numPages,page));ls.set('pg_'+cur,page);
-  const pg=await pdf.getPage(page),w=$('#stage').clientWidth,dpr=Math.min(window.devicePixelRatio||1,2);
-  const s=(w/pg.getViewport({scale:1}).width)*scale;let vp=pg.getViewport({scale:s*dpr}),c=$('#cv'),cw=vp.width/dpr,ch=vp.height/dpr;if(vp.width*vp.height>12e6){const k=Math.sqrt(12e6/(vp.width*vp.height));vp=pg.getViewport({scale:s*dpr*k})}
-  if(task){try{task.cancel()}catch(e){}}
-  c.width=vp.width;c.height=vp.height;c.style.width=cw+'px';c.style.height=ch+'px';
-  task=pg.render({canvasContext:c.getContext('2d'),viewport:vp});
-  try{await task.promise}catch(e){}
+  pgObj=await pdf.getPage(page);const v=pgObj.getViewport({scale:1});PW=v.width;PH=v.height;
   $('#pn').textContent=page+' / '+pdf.numPages;
+  const key=cur+':'+page;vf=fitF();
+  if(key!==vk){vk=key;vz=1;vtx=0;vty=0;$('#cv').style.transform='none'}
+  clampView();await paint();
 }
-const go=p=>{page=p;render();$('#stage').scrollTop=0};
+async function paint(){
+  const W=S.clientWidth,H=S.clientHeight,dpr=Math.min(window.devicePixelRatio||1,2),pg=pgObj;if(!pg||!W||!H)return;
+  const k=vf*vz,vp=pg.getViewport({scale:k*dpr,offsetX:vtx*dpr,offsetY:vty*dpr});
+  const oc=document.createElement('canvas');oc.width=Math.round(W*dpr);oc.height=Math.round(H*dpr);const ctx=oc.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(vtx*dpr,vty*dpr,PW*k*dpr,PH*k*dpr);
+  if(rst){try{rst.cancel()}catch(e){}}
+  const my=rst=pg.render({canvasContext:ctx,viewport:vp,background:'rgba(0,0,0,0)'});
+  try{await my.promise}catch(e){oc.width=oc.height=0;return}
+  if(rst!==my){oc.width=oc.height=0;return}
+  const c=$('#cv');c.width=oc.width;c.height=oc.height;c.style.width=W+'px';c.style.height=H+'px';c.getContext('2d').drawImage(oc,0,0);c.style.transform='none';
+  oc.width=oc.height=0;rdone={tx:vtx,ty:vty,z:vz,f:vf};
+}
+const go=p=>{page=p;render()};
+function previewCSS(){const c=$('#cv'),r=(vf*vz)/(rdone.f*rdone.z);c.style.transform='translate('+(vtx-rdone.tx*r)+'px,'+(vty-rdone.ty*r)+'px) scale('+r+')'}
+let tmr=null;const later=()=>{clearTimeout(tmr);tmr=setTimeout(paint,140)};
+function zoomAt(cx,cy,nz){nz=Math.max(1,Math.min(zMax(),nz));const k0=vf*vz,k1=vf*nz,px=(cx-vtx)/k0,py=(cy-vty)/k0;vz=nz;vtx=cx-px*k1;vty=cy-py*k1;clampView()}
+const P=new Map();let G=null,tapT=0,tapX=0,tapY=0;
+function startG(fp){const a=[...P.values()],R=S.getBoundingClientRect();G={n:a.length,z:vz,tx:vtx,ty:vty,moved:false,t:Date.now(),fp:!!fp};
+  if(a.length===1){G.x=a[0].x;G.y=a[0].y}
+  else if(a.length>=2){const[u,w]=a;G.d=Math.hypot(u.x-w.x,u.y-w.y)||1;G.mx=(u.x+w.x)/2-R.left;G.my=(u.y+w.y)/2-R.top;G.px=(G.mx-vtx)/(vf*vz);G.py=(G.my-vty)/(vf*vz)}}
+S.addEventListener('pointerdown',e=>{try{S.setPointerCapture(e.pointerId)}catch(x){}P.set(e.pointerId,{x:e.clientX,y:e.clientY});startG(P.size>1)});
+S.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});if(!G)return;const a=[...P.values()],R=S.getBoundingClientRect();
+  if(a.length===1&&G.n===1){const dx=a[0].x-G.x,dy=a[0].y-G.y;if(Math.abs(dx)+Math.abs(dy)>4)G.moved=true;vtx=G.tx+dx;vty=G.ty+dy;clampView();previewCSS()}
+  else if(a.length>=2&&G.n>=2){const[u,w]=a,d=Math.hypot(u.x-w.x,u.y-w.y)||1,mx=(u.x+w.x)/2-R.left,my=(u.y+w.y)/2-R.top;G.moved=true;
+    const nz=Math.max(1,Math.min(zMax(),G.z*d/G.d)),k=vf*nz;vz=nz;vtx=mx-G.px*k;vty=my-G.py*k;clampView();previewCSS()}});
+function endP(e){if(!P.has(e.pointerId))return;P.delete(e.pointerId);
+  if(P.size>0){startG(true);return}
+  if(!G)return;const dx=e.clientX-G.x,dy=e.clientY-G.y;
+  if(G.n===1&&!G.moved&&!G.fp&&Date.now()-G.t<300){
+    const R=S.getBoundingClientRect(),x=e.clientX-R.left,y=e.clientY-R.top,now=Date.now();
+    if(now-tapT<320&&Math.hypot(x-tapX,y-tapY)<30){tapT=0;zoomAt(x,y,vz>1.5?1:Math.min(zMax(),Math.max(3,vz*3)));previewCSS();later()}else{tapT=now;tapX=x;tapY=y}
+  }else if(G.n===1&&!G.fp&&G.moved&&vz<1.02&&Math.abs(dx)>70&&Math.abs(dy)<60){go(page+(dx<0?1:-1))}
+  else later();
+  G=null}
+S.addEventListener('pointerup',endP);S.addEventListener('pointercancel',endP);
+S.addEventListener('wheel',e=>{e.preventDefault();const R=S.getBoundingClientRect();zoomAt(e.clientX-R.left,e.clientY-R.top,vz*Math.exp(-e.deltaY*(e.ctrlKey?0.01:0.002)));previewCSS();later()},{passive:false});
+const zb=f=>{zoomAt(S.clientWidth/2,S.clientHeight/2,vz*f);previewCSS();later()};
+$('#zi').onclick=()=>zb(1.7);$('#zo').onclick=()=>zb(1/1.7);
+$('#fit').onclick=()=>{fitMode=fitMode==='page'?'width':'page';ls.set('fitmode',fitMode);vk='';render()};
 $('#pv').onclick=()=>go(page-1);$('#nx').onclick=()=>go(page+1);
-$('#zi').onclick=()=>{scale=Math.min(8,scale+(scale>=2?.5:.25));render()};$('#zo').onclick=()=>{scale=Math.max(.5,scale-.25);render()};
 $('#bk').onclick=()=>{$('#viewer').style.display='none';$('#home').style.display='block';pdf=null;home()};
-let tx=0;$('#stage').addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
-$('#stage').addEventListener('touchend',e=>{if(scale>1)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>70)go(page+(d<0?1:-1))},{passive:true});
+window.addEventListener('resize',()=>{if(pdf&&$('#viewer').style.display!=='none'){vk='';render()}});
 async function loadOutline(){
   const box=$('#ol');box.innerHTML='';let ol=null;
   if(IDXS[cur]){const IX=IDXS[cur];const mk=(t,p,c)=>{const b=document.createElement('button');b.className='it '+(c||'');b.textContent=t+' · p.'+p;b.onclick=()=>{closeP();go(p)};box.appendChild(b)};
@@ -237,7 +277,7 @@ let CARTAS=null;
 const cPath=m=>'cartas/'+encodeURIComponent(m.file)+'?v='+m.v;
 function drawCartas(){
   const it=(CARTAS&&CARTAS.items)||[];
-  $('#pMaps').innerHTML='<p class="s">Cartas aeronáuticas. Si se ven borrosas al ampliar, usa «Visor del iPad» (zoom completo con los dedos).</p>'+(it.length?it.map((m,i)=>m.tooBig?`<div class="ap" style="padding:12px"><b>${m.label}</b><div class="s">⚠️ PDF muy pesado (${(m.size/1048576).toFixed(0)} MiB): comprímelo a menos de 25 MiB y vuelve a subirlo.</div></div>`:`<div class="ap" style="padding:12px"><b>${m.label}</b><div class="row"><button class="p" data-c="${i}">Ver en la app</button><a class="it" href="${cPath(m)}" target="_blank" rel="noopener">Visor del iPad</a></div></div>`).join('')+'<div class="row"><button id="cdl">⬇️ Guardar sin conexión</button></div>':'<p class="s">Aún no hay cartas publicadas. Sube los PDF a la carpeta public/cartas del repositorio.</p>')+'<div id="cst" class="s"></div>';
+  $('#pMaps').innerHTML='<p class="s">Cartas aeronáuticas. Si se ven borrosas al ampliar, usa «Visor del iPad» (zoom completo con los dedos).</p>'+(it.length?it.map((m,i)=>m.tooBig?`<div class="ap" style="padding:12px"><b>${m.label}</b><div class="s">⚠️ PDF muy pesado (${(m.size/1048576).toFixed(0)} MiB): comprímelo a menos de 25 MiB y vuelve a subirlo.</div></div>`:`<div class="ap" style="padding:12px"><b>${m.label}</b><div class="row"><button class="p" data-c="${i}">Ver en la app</button><a class="it" href="${cPath(m)}" target="_blank" rel="noopener">Visor del iPad</a></div></div>`).join('')+'<div class="row"><button id="cdl">⬇️ Guardar sin conexión</button></div>':(CARTAS?'<p class="s">El índice de cartas está vacío: el deploy no encontró PDF en public/cartas (o no los publicó).</p>':'<p class="s">No se encontró cartas/index.json: el deploy no lo publicó.</p>'))+'<div id="cst" class="s"></div>';
 }
 async function cleanCartas(){try{if(!CARTAS)return;const keep=new Set(CARTAS.items.filter(m=>!m.tooBig).map(m=>new URL(cPath(m),location.href).href)),c=await caches.open(CN);for(const rq of await c.keys()){const u=new URL(rq.url);if(u.pathname.includes('/cartas/')&&u.pathname.endsWith('.pdf')&&!keep.has(u.href))await c.delete(rq)}}catch(e){}}
 async function loadCartas(){try{const r=await fetch('cartas/index.json');if(!r.ok)throw 0;CARTAS=await r.json()}catch(e){CARTAS=null}drawCartas();cleanCartas()}
