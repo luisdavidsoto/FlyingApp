@@ -40,7 +40,7 @@ textarea{height:60vh;resize:none}
   <div class="s">Escuela Flying · elige el avión</div>
   <div id="list"></div>
   <div class="row"><button data-p="Calc">🧮 Calculadoras</button><button data-p="Links">🔗 Más enlaces</button></div>
-  <div class="row"><button class="p" data-p="Aip">🛬 AIP · Aeropuertos</button><button data-p="Maps">🗺️ Mapas</button></div>
+  <div class="row"><button class="p" data-p="Aip">🛬 AIP · Aeropuertos</button><button data-p="Maps">🗺️ Cartas aeronáuticas</button></div>
   <div class="row" style="flex-wrap:wrap"><button id="bn" style="flex:1;min-width:30%">📋 NOTAM</button><a class="it lk" href="https://meteorologia.aerocivil.gov.co/wxwatch/table?list_id=1" target="_blank" rel="noopener">🌦️ METAR</a><a class="it lk" href="https://meteorologia.aerocivil.gov.co/satellite_image" target="_blank" rel="noopener">🛰️ Satélite</a></div>
   <p class="s">El manual del Cessna 172S ya viene incluido. Cuando tengas el del Tecnam, se añade aquí.</p>
 </div>
@@ -73,9 +73,9 @@ const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const IDX={"sec": [["1 · General", 9], ["2 · Limitaciones", 37], ["3 · Procedimientos de emergencia", 53], ["4 · Procedimientos normales", 77], ["5 · Performance", 113], ["6 · Peso y balance", 137], ["7 · Sistemas del avión", 163], ["8 · Manejo y mantenimiento", 217], ["9 · Suplementos", 241]], "sub": [["Velocidades normales", 81], ["Inspección prevuelo", 83], ["Antes de encender", 87], ["Antes del despegue", 91], ["Despegue normal / corto", 91], ["Aterrizaje normal / corto", 93], ["Procedimientos ampliados", 94], ["Entradas en pérdida", 106], ["Aterrizaje cruzado / frustrado", 109], ["Clima frío", 110]], "em": [["Velocidades de emergencia", 55], ["Falla de motor en carrera de despegue / tras despegue", 56], ["Aterrizaje forzoso sin motor", 57], ["Aterrizaje precautorio / amerizaje", 58], ["Fuego en arranque / motor en vuelo", 59], ["Fuego eléctrico / cabina", 60], ["Fuego en ala", 61], ["Hielo inadvertido", 61], ["Fuente estática bloqueada", 62], ["Neumático desinflado (principal / nariz)", 62], ["Fallas del sistema eléctrico", 63], ["Falla de vacío", 64], ["Ampliado: falla de motor", 65], ["Ampliado: aterrizaje sin elevador", 67], ["Ampliado: nubes y descenso de emergencia", 68], ["Ampliado: barrena (spin)", 71], ["Ampliado: motor áspero / pérdida de potencia", 72], ["Ampliado: presión de aceite baja / vapor", 73], ["Ampliado: fallas eléctricas", 74], ["Otras emergencias / parabrisas", 75]]};
 const IDXS={a1:IDX,a2:{"sec": [["General", 3], ["1 · Limitaciones", 4], ["2 · Procedimientos normales", 6], ["3 · Emergencias", 14], ["4 · Circuito de tráfico", 22], ["Cabina (cockpit layout)", 25], ["Llamadas estándar del circuito", 26]], "sub": [["Velocidades normales y pérdida", 5], ["Inspección prevuelo", 6], ["Inspección de cabina", 8], ["Encendido del motor", 8], ["Antes de rodar / rodaje", 9], ["Prueba de motor (run up)", 9], ["Alineación y despegue", 10], ["Ascenso", 11], ["Antes de aterrizar / final", 11], ["Aterrizaje frustrado (go-around)", 11], ["Después de aterrizar", 11], ["Apagado y postvuelo", 12], ["Equipo VFR nocturno", 13], ["Briefing de despegue y aproximación", 23], ["Diagramas de circuito y go-around", 24]], "em": [["Falla eléctrica (luz ALT)", 14], ["Falla de fuente estática", 14], ["Falla de bomba eléctrica de combustible", 15], ["Falla del sistema de trim", 15], ["Apagado de motor en vuelo", 15], ["Falla de motor en carrera de despegue", 15], ["Falla de motor después del despegue", 16], ["Baja presión de combustible", 16], ["Presión de aceite fuera de límites", 16], ["Temperatura de aceite alta", 16], ["CHT/CT fuera de límites", 17], ["Reencendido en vuelo", 17], ["Fuego de motor en tierra", 17], ["Fuego de motor en despegue", 18], ["Fuego de motor en vuelo", 18], ["Fuego/humo en cabina en vuelo", 18], ["Humo eléctrico en tierra", 18], ["Aterrizaje forzoso sin motor", 19], ["Aterrizaje forzoso con motor", 19], ["Neumático de nariz desinflado", 19], ["Neumático principal desinflado", 19], ["Evacuación del avión", 20], ["Recuperación de barrena", 20], ["Hielo inadvertido", 20], ["Fallas del G500", 20]]}};
-const FILES={a1:'manuales/c172.pdf',a2:'manuales/tecnam.pdf',mc:'mapas/colombia.pdf',ma:'mapas/antioquia.pdf'};
-const CN='v3';
-let names={a1:'Cessna 172S',a2:'Tecnam P2002JF',mc:'Mapa de Colombia',ma:'Mapa de Antioquia'},cur,pdf,page=1,scale=1,texts=null,task,upId;
+const FILES={a1:'manuales/c172.pdf',a2:'manuales/tecnam.pdf'};
+const CN='v4';
+let names={a1:'Cessna 172S',a2:'Tecnam P2002JF'},cur,pdf,page=1,scale=1,texts=null,task,upId;
 if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='pdf.worker.min.js';
 function dbo(){return new Promise((res,rej)=>{try{const r=indexedDB.open('manuales',1);r.onupgradeneeded=()=>r.result.createObjectStore('pdf');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
 async function idb(mode,fn){const d=await dbo();return new Promise((res,rej)=>{const t=d.transaction('pdf',mode);const q=fn(t.objectStore('pdf'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)})}
@@ -151,7 +151,7 @@ function drawFav(){
 }
 $('#nt').oninput=e=>ls.set('nt_'+cur,e.target.value);
 $('#nref').onclick=()=>{const t=$('#nt');t.value+=(t.value?'\n':'')+`[p.${page}] `;t.dispatchEvent(new Event('input'))};
-const T={Out:'Índice',Search:'Buscar',Fav:'Emergencias y favoritos',Notes:'Notas',Aip:'AIP · Aeropuertos',Maps:'Mapas',Calc:'Calculadoras',Links:'Más enlaces'};
+const T={Out:'Índice',Search:'Buscar',Fav:'Emergencias y favoritos',Notes:'Notas',Aip:'AIP · Aeropuertos',Maps:'Cartas aeronáuticas',Calc:'Calculadoras',Links:'Más enlaces'};
 function openP(n){document.querySelectorAll('.pn').forEach(p=>p.style.display='none');$('#p'+n).style.display='block';
   $('#sht').textContent=T[n];$('#sheet').style.display='flex';
   if(n==='Fav')drawFav();if(n==='Notes')$('#nt').value=ls.get('nt_'+cur,'');}
@@ -192,8 +192,8 @@ function renderApts(){
   const idx=(AIPIDX&&AIPIDX.airports)||{},list=APTS.map(a=>({ic:a[2],t:a[0]+' · '+a[1]}));
   Object.keys(idx).forEach(ic=>{if(!list.some(x=>x.ic===ic))list.push({ic,t:idx[ic].label||ic})});
   const refv=Math.max(0,...Object.values(idx).map(m=>m.val||0));
-  $('#al').innerHTML=list.map(x=>{const m=idx[x.ic];let st='— no está en la carpeta aip';if(m)st=m.cycle?((m.val&&m.val<refv)?'⚠️ '+m.cycle+' (más viejo que otros)':'✓ '+m.cycle):'✓ disponible';
-    return `<details class="ap" data-s="${(x.t+' '+x.ic).toLowerCase()}"><summary>${x.t} — ${x.ic}<br><span class="s">${st}</span></summary>${m?`<div class="row"><button class="p" data-aip="${x.ic}">📘 Abrir AIP</button></div>`:''}</details>`}).join('');
+  $('#al').innerHTML=list.map(x=>{const m=idx[x.ic];let st='— no está en la carpeta aip';if(m&&m.tooBig)st='⚠️ PDF muy pesado ('+(m.size/1048576).toFixed(0)+' MiB): comprímelo a menos de 25 MiB y vuelve a subirlo';else if(m)st=m.cycle?((m.val&&m.val<refv)?'⚠️ '+m.cycle+' (más viejo que otros)':'✓ '+m.cycle):'✓ disponible';
+    return `<details class="ap" data-s="${(x.t+' '+x.ic).toLowerCase()}"><summary>${x.t} — ${x.ic}<br><span class="s">${st}</span></summary>${m&&!m.tooBig?`<div class="row"><button class="p" data-aip="${x.ic}">📘 Abrir AIP</button></div>`:''}</details>`}).join('');
   const g=AIPIDX&&AIPIDX.generated;$('#aipst').textContent=g?'Datos publicados el '+new Date(g).toLocaleDateString('es-CO'):'Sin datos del AIP todavía (no hay PDF en la carpeta aip).';
   applyFilter();
 }
@@ -206,7 +206,7 @@ async function openAip(ic){
   catch(e){st.textContent='';alert('No pude abrir el AIP de '+ic+'. Si no tienes internet, primero toca «Guardar todos sin conexión» estando conectado.')}
 }
 $('#aipdl').onclick=async()=>{
-  const idx=(AIPIDX&&AIPIDX.airports)||{},ks=Object.keys(idx),st=$('#aipst');let n=0;
+  const idx=(AIPIDX&&AIPIDX.airports)||{},ks=Object.keys(idx).filter(k=>!idx[k].tooBig),st=$('#aipst');let n=0;
   if(!ks.length){st.textContent='No hay AIP publicados.';return}
   try{const c=await caches.open(CN);for(const k of ks){st.textContent='Guardando '+k+'… ('+n+'/'+ks.length+')';await c.add(aipPath(idx[k]));n++}st.textContent='Listo: '+n+' AIP guardados para uso sin conexión.'}
   catch(e){st.textContent='Se guardaron '+n+' de '+ks.length+'. Revisa tu conexión o el espacio del iPad.'}
@@ -233,9 +233,19 @@ async function openNotam(){
 $('#bn').onclick=openNotam;
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-$('#pMaps').innerHTML='<p class="s">Mapas del IGAC. Si el mapa se ve borroso al ampliar, usa «Visor del iPad» (zoom completo con los dedos).</p>'+[['mc','Colombia · mapa físico','mapas/colombia.pdf'],['ma','Antioquia · escala 1:500.000','mapas/antioquia.pdf']].map(m=>`<div class="ap" style="padding:12px"><b>${m[1]}</b><div class="row"><button class="p" data-m="${m[0]}">Ver en la app</button><a class="it" href="${m[2]}" target="_blank" rel="noopener">Visor del iPad</a></div></div>`).join('')+'<div class="row"><button id="mdl">⬇️ Guardar mapas sin conexión</button></div><div id="mst" class="s"></div>';
-$('#pMaps').onclick=async e=>{const b=e.target.closest('button[data-m]');if(b){closeP();$('#mst').textContent='';await openAc(b.dataset.m,null,names[b.dataset.m]);return}
-  if(e.target.id==='mdl'){const st=$('#mst');try{const c=await caches.open(CN);for(const f of ['mapas/colombia.pdf','mapas/antioquia.pdf']){st.textContent='Guardando '+f+'…';await c.add(f)}st.textContent='Listo: mapas guardados para uso sin conexión.'}catch(x){st.textContent='No se pudo guardar. Revisa tu conexión.'}}};
-
+let CARTAS=null;
+const cPath=m=>'cartas/'+encodeURIComponent(m.file)+'?v='+m.v;
+function drawCartas(){
+  const it=(CARTAS&&CARTAS.items)||[];
+  $('#pMaps').innerHTML='<p class="s">Cartas aeronáuticas. Si se ven borrosas al ampliar, usa «Visor del iPad» (zoom completo con los dedos).</p>'+(it.length?it.map((m,i)=>m.tooBig?`<div class="ap" style="padding:12px"><b>${m.label}</b><div class="s">⚠️ PDF muy pesado (${(m.size/1048576).toFixed(0)} MiB): comprímelo a menos de 25 MiB y vuelve a subirlo.</div></div>`:`<div class="ap" style="padding:12px"><b>${m.label}</b><div class="row"><button class="p" data-c="${i}">Ver en la app</button><a class="it" href="${cPath(m)}" target="_blank" rel="noopener">Visor del iPad</a></div></div>`).join('')+'<div class="row"><button id="cdl">⬇️ Guardar sin conexión</button></div>':'<p class="s">Aún no hay cartas publicadas. Sube los PDF a la carpeta public/cartas del repositorio.</p>')+'<div id="cst" class="s"></div>';
+}
+async function cleanCartas(){try{if(!CARTAS)return;const keep=new Set(CARTAS.items.filter(m=>!m.tooBig).map(m=>new URL(cPath(m),location.href).href)),c=await caches.open(CN);for(const rq of await c.keys()){const u=new URL(rq.url);if(u.pathname.includes('/cartas/')&&u.pathname.endsWith('.pdf')&&!keep.has(u.href))await c.delete(rq)}}catch(e){}}
+async function loadCartas(){try{const r=await fetch('cartas/index.json');if(!r.ok)throw 0;CARTAS=await r.json()}catch(e){CARTAS=null}drawCartas();cleanCartas()}
+$('#pMaps').onclick=async e=>{
+  const b=e.target.closest('button[data-c]');
+  if(b){const m=CARTAS.items[+b.dataset.c];closeP();try{const buf=await (await fetch(cPath(m))).arrayBuffer();await openAc('carta:'+m.key,buf,m.label)}catch(x){alert('No pude abrir la carta. Sin internet, primero guárdala sin conexión.')}return}
+  if(e.target.id==='cdl'){const st=$('#cst'),ms=((CARTAS&&CARTAS.items)||[]).filter(m=>!m.tooBig);let n=0;try{const c=await caches.open(CN);for(const m of ms){st.textContent='Guardando '+m.label+'…';await c.add(cPath(m));n++}st.textContent='Listo: '+n+' carta(s) guardada(s) para uso sin conexión.'}catch(x){st.textContent='Se guardaron '+n+' de '+ms.length+'. Revisa tu conexión o el espacio del iPad.'}}
+};
+loadCartas();
 home();
 </script></body></html>
