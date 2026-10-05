@@ -1,11 +1,13 @@
 // Se ejecuta en cada deploy de Cloudflare Pages.
-// Lee los PDF de public/aip, detecta aeropuerto y ciclo, organiza las hojas por categoría
-// y escribe public/aip/index.json, que es lo que lee la app.
+// Lee los PDF de public/aip (detecta aeropuerto y ciclo, organiza las hojas por categoría)
+// y de public/cartas, y escribe public/aip/index.json y public/cartas/index.json, que son lo que lee la app.
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 let pdfjs = null;
 try { pdfjs = require('pdfjs-dist/legacy/build/pdf.js'); } catch (e) { console.warn('pdfjs no disponible:', e.message); }
 
 const DIR = path.join(__dirname, 'public', 'aip');
+const CDIR = path.join(__dirname, 'public', 'cartas');
+const MAX = 25 * 1024 * 1024;
 const CATS = [
   ['Plano de aeródromo', /aerodrome chart|plano de aer[oó]dromo|\bADC\b/i],
   ['Estacionamiento / movimientos en tierra', /parking|docking|estacionamiento|ground movement|movimientos? en tierra/i],
@@ -53,14 +55,37 @@ async function textOf(buf) {
   return T;
 }
 
+function processCartas() {
+  try {
+    fs.mkdirSync(CDIR, { recursive: true });
+    const items = [];
+    for (const f of fs.readdirSync(CDIR).filter(f => /\.pdf$/i.test(f)).sort()) {
+      const buf = fs.readFileSync(path.join(CDIR, f)), size = buf.length, base = f.replace(/\.pdf$/i, '').trim();
+      const tooBig = size >= MAX;
+      if (tooBig) console.warn('AVISO: ' + f + ' pesa 25 MiB o más; Cloudflare Pages no lo publicará.');
+      const nice = base.replace(/[_]+/g, ' ');
+      items.push({ key: base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), file: f,
+        label: 'Carta ' + nice.charAt(0).toUpperCase() + nice.slice(1).toLowerCase(),
+        v: crypto.createHash('sha1').update(buf).digest('hex').slice(0, 12), size, tooBig });
+      console.log('OK carta |', f, '|', (size / 1048576).toFixed(1) + ' MiB');
+    }
+    fs.writeFileSync(path.join(CDIR, 'index.json'), JSON.stringify({ generated: new Date().toISOString(), items }));
+    console.log('Listo: ' + items.length + ' carta(s) en cartas/index.json');
+  } catch (e) {
+    console.warn('Se omitió el procesamiento de cartas:', e.message);
+    try { fs.mkdirSync(CDIR, { recursive: true }); fs.writeFileSync(path.join(CDIR, 'index.json'), JSON.stringify({ generated: new Date().toISOString(), items: [] })); } catch (x) {}
+  }
+}
+
 (async () => {
+  processCartas();
   fs.mkdirSync(DIR, { recursive: true });
   const files = fs.readdirSync(DIR).filter(f => /\.pdf$/i.test(f)).sort();
   const out = { generated: new Date().toISOString(), airports: {} };
   for (const f of files) {
     try {
       const buf = fs.readFileSync(path.join(DIR, f)), size = buf.length;
-      if (size >= 25 * 1024 * 1024) console.warn('AVISO: ' + f + ' pesa 25 MiB o más; Cloudflare Pages no lo publicará.');
+      if (size >= MAX) console.warn('AVISO: ' + f + ' pesa 25 MiB o más; Cloudflare Pages no lo publicará.');
       let T = []; try { if (pdfjs) T = await textOf(buf); } catch (e) { console.warn('No pude leer el texto de ' + f + ': ' + e.message); }
       let ic = (f.match(/AD\s*2\s*([A-Z]{4})/i) || [])[1];
       if (!ic && T.length) ic = (T.slice(0, 2).join(' ').match(/AD\s*2\s*(S[KQ][A-Z]{2})/) || [])[1];
@@ -71,7 +96,7 @@ async function textOf(buf) {
       const label = ((f.replace(/\.pdf$/i, '').match(/AD\s*2\s*[A-Z]{4}\s*-\s*(.+)$/i) || [])[1] || ic).trim();
       out.airports[ic] = { file: f, v: crypto.createHash('sha1').update(buf).digest('hex').slice(0, 12), size, label,
         cycle: cm ? 'AMDT ' + cm[1] + '/' + cm[2] : '', val: cm ? (+cm[2]) * 1000 + (+cm[1]) : 0, date: dm ? dm[1] : '',
-        pages: T.length, info: r.info, ch: r.ch, idx: !!r.idx };
+        pages: T.length, info: r.info, ch: r.ch, idx: !!r.idx, tooBig: size >= MAX };
       console.log('OK', ic, '|', f, '|', T.length + ' págs |', r.idx ? 'índice de cartas leído' : 'sin índice de cartas');
     } catch (e) { console.warn('Error con ' + f + ': ' + e.message); }
   }
