@@ -48,6 +48,14 @@ button.ob .pg{flex:0 0 auto;color:#7b8494;font-size:13px;white-space:nowrap}
 button.o0{font-weight:700;border-color:var(--ac);color:var(--ac);margin-top:12px}
 button.o1{margin-left:0}button.o2{margin-left:14px;width:calc(100% - 14px);font-size:15px}button.o3{margin-left:28px;width:calc(100% - 28px);font-size:14px}
 #nt{height:48vh}
+#viewer{position:relative}
+#gbar{display:none;flex:0 0 auto;gap:6px;padding:6px 8px;overflow-x:auto;white-space:nowrap;background:var(--card);border-bottom:1px solid var(--bd);-webkit-overflow-scrolling:touch;align-items:center}
+#gbar.on{display:flex}
+#gbar .chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#gnav{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:5;align-items:center;gap:4px;padding:4px 6px;background:var(--card);border:1px solid var(--bd);border-radius:24px;box-shadow:0 2px 12px #0005}
+#gnav.on{display:flex}
+#gnav button{min-height:40px;min-width:44px;margin:0}
+#glb{font-weight:600;padding:0 6px;white-space:nowrap}
 .mo{white-space:pre-wrap;word-break:break-word;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;font:13px/1.45 ui-monospace,Menlo,monospace;margin:8px 0;min-height:48px;-webkit-user-select:text;user-select:text}
 .chip{flex:0 0 auto;min-height:36px;padding:4px 12px;border-radius:18px;margin:0}
 .big{font-size:20px}
@@ -66,6 +74,7 @@ button.o1{margin-left:0}button.o2{margin-left:14px;width:calc(100% - 14px);font-
 </div>
 <div id="viewer">
   <div id="top"><button id="bk">←</button><div id="ttl"></div><button id="fit" aria-label="Ajustar a pantalla">⤢</button><button data-p="Calc" aria-label="Calculadoras">🧮</button><button id="zo">−</button><button id="zi">+</button></div>
+  <div id="gbar"></div>
   <div id="stage"><div id="world"><canvas id="cv"></canvas><div id="tl"></div></div></div>
   <div id="bar">
     <button data-p="Out" aria-label="Índice">☰</button>
@@ -75,6 +84,7 @@ button.o1{margin-left:0}button.o2{margin-left:14px;width:calc(100% - 14px);font-
     <button data-p="Fav" aria-label="Emergencias y favoritos">🚨</button>
     <button data-p="Notes" aria-label="Notas">📝</button>
   </div>
+  <div id="gnav"><button id="gpv" aria-label="Carta anterior">◀</button><span id="glb"></span><button id="gnx" aria-label="Carta siguiente">▶</button><button id="gx" aria-label="Cerrar">✕</button></div>
 </div>
 <div id="sheet">
   <div id="sh"><b id="sht"></b><button id="cl">Cerrar</button></div>
@@ -82,7 +92,7 @@ button.o1{margin-left:0}button.o2{margin-left:14px;width:calc(100% - 14px);font-
   <div class="pn" id="pSearch"><input type="text" id="q" placeholder="Buscar en el manual (Enter)"><div id="sr"></div></div>
   <div class="pn" id="pFav"></div>
   <div class="pn" id="pAip"></div><div class="pn" id="pMaps"></div><div class="pn" id="pCalc"></div><div class="pn" id="pLinks"></div>
-  <div class="pn" id="pNotes"></div><div class="pn" id="pMetar"></div>
+  <div class="pn" id="pNotes"></div><div class="pn" id="pMetar"></div><div class="pn" id="pGrp"></div>
 </div>
 <input type="file" id="file" accept="application/pdf" hidden>
 <script src="pdf.min.js"></script>
@@ -93,7 +103,7 @@ const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const IDXS={"a1":{"tree":[["Section 1 · General",9,0,"1-1"],["Three View - Normal Ground Attitude",10,1,"1-2"],["Introduction",12,1,"1-4"],["Descriptive Data",12,1,"1-4"],["Engine",12,2,"1-4"],["Propeller",12,2,"1-4"],["Fuel",12,2,"1-4"],["Oil",13,2,"1-5"],["Maximum Certificated Weights",14,2,"1-6"],["Standard Airplane Weights",15,2,"1-7"],["Cabin And Entry Dimensions",15,2,"1-7"],["Baggage Space And Entry Dimensions",15,2,"1-7"],["Specific Loadings",15,2,"1-7"],["Symbols, Abbreviations and Terminology",16,1,"1-8"],["General Airspeed Terminology And Symbols",16,2,"1-8"],["Meteorological Terminology",17,2,"1-9"],["Engine Power Terminology",17,2,"1-9"],["Airplane Performance And Flight Planning Terminology",18,2,"1-10"],["Weight And Balance Terminology",19,2,"1-11"],["Metric / Imperial / U.S. Conversion Charts",21,1,"1-13"],["Weight Conversions",22,2,"1-14"],["Length Conversions",24,2,"1-16"],["Distance Conversions",28,2,"1-20"],["Volume Conversions",29,2,"1-21"],["Temperature Conversions",32,2,"1-24"],["Hectopascals To Inches Mercury",33,2,"1-25"],["Volume to Weight Conversions",34,2,"1-26"],["Quick Conversions",35,2,"1-27"],["Section 2 · Limitations",37,0,"2-1"],["Introduction",39,1,"2-3"],["Airspeed Limitations",40,1,"2-4"],["Airspeed Indicator Markings",41,1,"2-5"],["Powerplant Limitations",41,1,"2-5"],["Powerplant Instrument Markings",42,1,"2-6"],["Weight Limits",43,1,"2-7"],["Normal Category",43,2,"2-7"],["Utility Category",43,2,"2-7"],["Center Of Gravity Limits",43,1,"2-7"],["Utility Category",44,2,"2-8"],["Maneuver Limits",44,1,"2-8"],["Normal Category",44,2,"2-8"],["Utility Category",45,2,"2-9"],["Flight Load Factor Limits",46,1,"2-10"],["Normal Category",46,2,"2-10"],["Utility Category",46,2,"2-10"],["Kinds Of Operation Limits",46,1,"2-10"],["Fuel Limitations",47,1,"2-11"],["Additional Fuel Limitations",47,1,"2-11"],["Other Limitations",47,1,"2-11"],["Flap Limitations",47,2,"2-11"],["Placards",48,1,"2-12"],["Section 3 · Emergency Procedures",53,0,"3-1"],["Introduction",55,1,"3-3"],["Airspeeds For Emergency Operation",55,1,"3-3"],["Engine Failures",56,1,"3-4"],["Engine Failure During Takeoff Roll",56,2,"3-4"],["Engine Failure Immediately After Takeoff",56,2,"3-4"],["Engine Failure During Flight (Restart Procedures)",57,2,"3-5"],["Forced Landings",57,1,"3-5"],["Emergency Landing Without Engine Power",57,2,"3-5"],["Ditching",58,2,"3-5"],["Fires",58,1,"3-6"],["During Start On Ground",58,2,"3-6"],["Precautionary Landing With Engine Power",58,2,"3-6"],["Engine Fire In Flight",59,2,"3-7"],["Electrical Fire In Flight",60,2,"3-8"],["Cabin Fire",60,2,"3-8"],["Wing Fire",61,2,"3-9"],["Icing",61,1,"3-9"],["Inadvertent Icing Encounter",61,2,"3-9"],["Static Source Blockage",62,2,"3-10"],["Landing With A Flat Main Tire",62,1,"3-10"],["Landing With A Flat Nose Tire",62,1,"3-10"],["Electrical Power Supply System Malfunctions",63,1,"3-11"],["Ammeter Shows Excessive Rate of Charge (Full Scale Deflection)",63,2,"3-11"],["Low Voltage Annunciator (VOLTS) Illuminates During Flight (Ammeter Indicates Discharge)",63,2,"3-11"],["Vacuum System Failure",64,1,"3-12"],["Engine Failure",65,1,"3-13"],["Forced Landings",67,1,"3-15"],["Landing Without Elevator Control",67,1,"3-15"],["Fires",68,1,"3-16"],["Emergency Operation In Clouds (Vacuum System Failure)",68,1,"3-16"],["Executing A 180° Turn In Clouds",68,2,"3-16"],["Emergency Descent Through Clouds",69,2,"3-17"],["Recovery From Spiral Dive In The Clouds",70,2,"3-18"],["Inadvertent Flight Into Icing Conditions",70,1,"3-18"],["Static Source Blocked",70,2,"3-18"],["Spins",71,1,"3-19"],["Rough Engine Operation Or Loss Of Power",72,1,"3-20"],["Spark Plug Fouling",72,2,"3-20"],["Magneto Malfunction",72,2,"3-20"],["Engine-Driven Fuel Pump Failure",72,2,"3-20"],["Excessive Fuel Vapor Indications",73,2,"3-21"],["Low Oil Pressure",73,2,"3-21"],["Electrical Power Supply System Malfunctions",74,1,"3-22"],["Excessive Rate of Charge",74,2,"3-22"],["Insufficient Rate Of Charge",75,2,"3-23"],["Other Emergencies",75,1,"3-23"],["Windshield Damage",75,2,"3-23"],["Section 4 · Normal Procedures",77,0,"4-1"],["Introduction",81,1,"4-5"],["Airspeeds For Normal Operation",81,1,"4-5"],["Preflight Inspection",83,1,"4-7"],["Cabin",83,2,"4-7"],["Empennage",84,2,"4-8"],["Right Wing, Trailing Edge",84,2,"4-8"],["Right Wing",84,2,"4-8"],["Nose",85,2,"4-9"],["Left Wing",86,2,"4-10"],["Left Wing, Leading Edge",87,2,"4-11"],["Left Wing, Trailing Edge",87,2,"4-11"],["Before Starting Engine",87,1,"4-11"],["Starting Engine (With Battery)",88,1,"4-12"],["Starting Engine (With External Power)",89,1,"4-13"],["Before Takeoff",91,1,"4-15"],["Takeoff",91,1,"4-15"],["Normal Takeoff",91,2,"4-15"],["Short Field Takeoff",92,2,"4-16"],["Enroute Climb",92,1,"4-16"],["Cruise",92,1,"4-16"],["Descent",92,1,"4-16"],["Before Landing",92,1,"4-16"],["Landing",93,1,"4-17"],["Normal Landing",93,2,"4-17"],["Short Field Landing",93,2,"4-17"],["Balked Landing",93,2,"4-17"],["After Landing",93,1,"4-17"],["Securing Airplane",93,1,"4-17"],["Preflight Inspection",94,1,"4-18"],["Starting Engine",95,1,"4-19"],["Recommended Starter Duty Cycle",96,2,"4-20"],["Leaning For Ground Operations",97,1,"4-21"],["Taxiing",97,1,"4-21"],["Before Takeoff",99,1,"4-23"],["Warm Up",99,2,"4-23"],["Magneto Check",99,2,"4-23"],["Alternator Check",99,2,"4-23"],["Landing Lights",100,2,"4-24"],["Takeoff",100,1,"4-24"],["Power Check",100,2,"4-24"],["Wing Flap Settings",101,2,"4-25"],["Crosswind Takeoff",101,2,"4-25"],["Enroute Climb",101,1,"4-25"],["Cruise",102,1,"4-26"],["Leaning With an EGT Indicator",103,2,"4-27"],["Fuel Savings Procedures for Flight Training Operations",104,2,"4-28"],["Fuel Vapor Procedures",105,2,"4-29"],["Stalls",106,1,"4-30"],["Spins",106,1,"4-30"],["Closed Throttle Engine Operating (Idling) During Flight",108,1,"4-32"],["Landing",109,1,"4-33"],["Normal Landing",108,1,"4-33"],["Short Field Landing",109,1,"4-33"],["Crosswind Landing",109,1,"4-34"],["Balked Landing",109,1,"4-34"],["Cold Weather Operation",110,1,"4-34"],["Winterization Kit",111,1,"4-36"],["Hot Weather Operation",112,1,"4-36"],["Noise Characteristics And Noise Reduction",112,1,"4-36"],["Section 5 · Performance",113,0,"5-1"],["Introduction",115,1,"5-3"],["Use of Performance Charts",115,1,"5-3"],["Sample Problem",115,1,"5-3"],["Takeoff",116,2,"5-4"],["Cruise",117,2,"5-5"],["Fuel Required",118,2,"5-6"],["Landing",120,2,"5-8"],["Demonstrated Operating Temperature",120,1,"5-8"],["Figure 5-1, Airspeed Calibration - Normal Static Source",121,1,"5-9"],["Airspeed Calibration - Alternate Static Source",122,2,"5-10"],["Figure 5-2, Temperature Conversion Chart",123,1,"5-11"],["Figure 5-3, Stall Speeds",124,1,"5-12"],["Figure 5-4, Crosswind Components",125,1,"5-13"],["Figure 5-5, Short Field Takeoff Distance",126,1,"5-14"],["Figure 5-6, Maximum Rate Of Climb",129,1,"5-17"],["Figure 5-7, Time, Fuel, And Distance To Climb",130,1,"5-18"],["Figure 5-8, Cruise Performance",131,1,"5-19"],["Figure 5-9, Range Profile",133,1,"5-21"],["Figure 5-10, Endurance Profile",134,1,"5-22"],["Figure 5-11, Short Field Landing Distance",135,1,"5-23"],["Section 6 · Weight & Balance / Equipment List",137,0,"6-1"],["Introduction",139,1,"6-3"],["Airplane Weighing Procedures",139,1,"6-3"],["Weight And Balance",142,1,"6-6"],["Baggage Tie-Down",144,2,"6-8"],["Comprehensive Equipment List",153,1,"6-17"],["Section 7 · Airplane & Systems Descriptions",163,0,"7-1"],["Introduction",167,1,"7-5"],["Airframe",167,1,"7-5"],["Flight Controls",168,1,"7-6"],["Trim System",168,2,"7-6"],["Instrument Panel",171,1,"7-9"],["Pilot Side Panel Layout",171,2,"7-9"],["Center Panel Layout",171,2,"7-9"],["Copilot Side Panel Layout",174,2,"7-12"],["Center Pedestal Layout",174,2,"7-12"],["Ground Control",174,1,"7-12"],["Wing Flap System",175,1,"7-13"],["Landing Gear System",176,1,"7-14"],["Baggage Compartment",176,1,"7-14"],["Seats",176,1,"7-14"],["Integrated Seat Belt/Shoulder Harness",177,1,"7-15"],["Entrance Doors And Cabin Windows",179,1,"7-17"],["Control Locks",180,1,"7-18"],["Engine",181,2,"7-19"],["Engine Controls",181,3,"7-19"],["Engine Instruments",181,3,"7-19"],["New Engine Break-In And Operation",183,1,"7-21"],["Engine Lubrication System",183,3,"7-21"],["Ignition And Starter System",184,3,"7-22"],["Air Induction System",184,3,"7-22"],["Exhaust System",185,3,"7-23"],["Cooling System",185,3,"7-23"],["Propeller",185,2,"7-23"],["Fuel System",185,2,"7-23"],["Fuel Distribution",186,3,"7-24"],["Fuel Indicating",187,3,"7-25"],["Fuel Venting",188,3,"7-26"],["Reduced Tank Capacity",188,3,"7-26"],["Fuel Selector Valve",188,3,"7-26"],["Fuel Drain Valves",192,3,"7-28"],["Brake System",193,2,"7-29"],["Electrical System",193,2,"7-29"],["Annunciator Panel",194,3,"7-32"],["Master Switch",195,3,"7-33"],["Avionics Master Switch",195,3,"7-34"],["Ammeter",196,3,"7-34"],["Low Voltage Annunciation",201,3,"7-35"],["Circuit Breakers And Fuses",201,3,"7-35"],["Ground Service Plug Receptacle",202,3,"7-36"],["Lighting Systems",203,1,"7-37"],["Exterior Lighting",203,2,"7-37"],["Interior Lighting",203,2,"7-37"],["Cabin Heating, Ventilating And Defrosting System",205,1,"7-39"],["Pitot-Static System And Instruments",207,1,"7-41"],["Airspeed Indicator",208,2,"7-42"],["Vertical Speed Indicator",208,2,"7-42"],["Altimeter",209,2,"7-43"],["Vacuum System And Instruments",209,1,"7-43"],["Attitude Indicator",209,2,"7-43"],["Directional Indicator",209,2,"7-43"],["Vacuum Gauge",211,2,"7-45"],["Low Vacuum Annunciation",211,2,"7-45"],["Clock / O.A.T. Indicator",212,1,"7-46"],["Stall Warning System",212,1,"7-46"],["Standard Avionics",212,1,"7-46"],["Avionics Support Equipment",213,1,"7-47"],["Avionics Cooling Fan",213,2,"7-47"],["Microphone And Headset Installations",213,2,"7-47"],["Static Dischargers",214,2,"7-48"],["Cabin Features",215,1,"7-49"],["Emergency Locator Transmitter (ELT)",215,2,"7-49"],["Cabin Fire Extinguisher",215,2,"7-49"],["Section 8 · Handling, Service & Maintenance",217,0,"8-1"],["Introduction",219,1,"8-3"],["Identification Plate",220,1,"8-4"],["Cessna Owner Advisories",220,1,"8-4"],["United States Airplane Owners",221,2,"8-5"],["International Airplane Owners",221,2,"8-5"],["Publications",221,2,"8-5"],["Airplane File",222,1,"8-6"],["Airplane Inspection Periods",223,1,"8-7"],["FAA Required Inspections",223,2,"8-7"],["Cessna Inspection Programs",224,2,"8-8"],["Cessna Customer Care Program",225,2,"8-9"],["Pilot Conducted Preventive Maintenance",225,1,"8-9"],["Alterations Or Repairs",226,1,"8-10"],["Ground Handling",226,1,"8-10"],["Towing",226,2,"8-10"],["Parking",227,2,"8-11"],["Tie-Down",227,2,"8-11"],["Jacking",227,2,"8-11"],["Leveling",228,2,"8-12"],["Flyable Storage",228,2,"8-12"],["Servicing",229,1,"8-13"],["Oil",230,1,"8-14"],["Oil Specification",230,2,"8-14"],["Recommended Viscosity for Temperature Range",230,2,"8-14"],["Capacity of Engine Sump",231,2,"8-15"],["Oil and Oil Filter Change",231,2,"8-15"],["Fuel",232,1,"8-16"],["Approved Fuel Grades (and Colors)",232,2,"8-16"],["Fuel Capacity",232,2,"8-16"],["Fuel Additives",232,2,"8-16"],["Fuel Contamination",236,2,"8-20"],["Landing Gear",237,1,"8-21"],["Cleaning And Care",237,1,"8-21"],["Windshield And Windows",237,2,"8-21"],["Painted Surfaces",238,2,"8-22"],["Propeller Care",239,2,"8-23"],["Engine Care",239,2,"8-23"],["Interior Care",240,2,"8-24"],["Section 9 · Supplements",241,0,"9-1"],["Log of Approved Supplements",244,1,"Log 1"],["Supplement 1 · Bendix/King KX 155A VHF NAV/COMM",245,1,""],["Supplement 2 · Bendix/King KT 76C Transponder With Blind Encoder",261,1,""],["Supplement 3 · Bendix/King KMA 26 Audio Selector Panel",271,1,""],["Supplement 4 · Pointer Model 3000-11 Or 4000-11 Emergency Locator Transmitter",281,1,""],["Supplement 5 · Bendix/King KLN 89B Global Positioning System (IFR)",291,1,""],["Supplement 6 · Bendix/King KR87 Automatic Direction Finder (ADF)",311,1,""],["Supplement 7 · Bendix/King KAP 140 Single Axis Autopilot",323,1,""],["Supplement 8 · Winterization Kit",343,1,""],["Supplement 9 · Davtron Model 803 Clock/O.A.T.",347,1,""],["Supplement 10 · Bendix/King KLN 89",354,1,""],["Supplement 12 · Canadian Supplement",358,1,""],["Supplement 13 · Bendix/King KCS-55A Slaved Compass System With KI-525A HSI",362,1,""],["Supplement 15 · Bendix/King KAP 140 2 Axis Autopilot",370,1,""],["Supplement 16 · Bendix/King KT 73 Mode S Transponder",406,1,""],["Supplement 19 · Bendix/King KLN 94 Global Positioning System",418,1,""],["Supplement 20 · Bendix/King KMA 28 Audio Selector Panel",439,1,""],["Supplement 21 · Bendix/King KMD 550 Multi-Function Display",451,1,""],["Supplement 22 · 12 Volt Cabin Power System",461,1,""],["Supplement 24 · Astrotech Model TC-2 Clock/OAT/Volt Indicator",469,1,""],["Supplement 25 · Bendix/King KX 165A VHF NAV/COM",475,1,""],["Supplement 26 · Bendix/King KDR 510 Flight Information Services (FIS)",489,1,""]],"em":[["Airspeeds For Emergency Operation",55,"3-3"],["Engine Failure During Takeoff Roll",56,"3-4"],["Engine Failure Immediately After Takeoff",56,"3-4"],["Engine Failure During Flight (Restart Procedures)",57,"3-5"],["Emergency Landing Without Engine Power",57,"3-5"],["Ditching",58,"3-5"],["During Start On Ground",58,"3-6"],["Precautionary Landing With Engine Power",58,"3-6"],["Engine Fire In Flight",59,"3-7"],["Electrical Fire In Flight",60,"3-8"],["Cabin Fire",60,"3-8"],["Wing Fire",61,"3-9"],["Inadvertent Icing Encounter",61,"3-9"],["Static Source Blockage",62,"3-10"],["Landing With A Flat Main Tire",62,"3-10"],["Landing With A Flat Nose Tire",62,"3-10"],["Ammeter Shows Excessive Rate of Charge (Full Scale Deflection)",63,"3-11"],["Low Voltage Annunciator (VOLTS) Illuminates During Flight (Ammeter Indicates Discharge)",63,"3-11"],["Vacuum System Failure",64,"3-12"]]},"a2":{"tree":[["GENERAL INFORMATION",3,0,"3"],["1  LIMITATION",4,0,"4"],["1.1  SPEED LIMITATIONS",4,1,"4"],["1.2  AIRSPEED INDICATOR MARKINGS",4,1,"4"],["1.3  NORMAL OPERATIONS",5,1,"5"],["1.4  STALL SPEED",5,1,"5"],["2  NORMAL PROCEDURES",6,0,"6"],["2.1  PRE-FLIGHT CHECK – AIRCRAFT WALK-AROUND",6,1,"6"],["2.2  COCKPIT INSPECTIONS",8,1,"8"],["2.3  ENGINE STARTING",8,1,"8"],["2.4  BEFORE TAXIING",9,1,"9"],["2.5  TAXIING",9,1,"9"],["2.6  PRIOR TO TAKEOFF / RUN UP",9,1,"9"],["2.7  LINE-UP",10,1,"10"],["2.8  TAKEOFF",10,1,"10"],["2.9  CLIMB",11,1,"11"],["2.10  BEFORE LANDING",11,1,"11"],["2.11  FINAL",11,1,"11"],["2.12  BALKED LANDING / MISSED APPROACH",11,1,"11"],["2.13  AFTER LANDING",11,1,"11"],["2.14  PARKING / SHUT DOWN",12,1,"12"],["2.15  POSTFLIGHT CHECKS",12,1,"12"],["2.16  VFR NIGHT EQUIPMENT",13,1,"13"],["3  EMERGENCY PROCEDURES",14,0,"14"],["3.1  AIRPLANE ALERTS",14,1,"14"],["3.1.1  ELECTRIC POWER SYSTEM MALFUNCTION",14,2,"14"],["3.1.2  INSTRUMENTS LIGHTS FAILURE",14,2,"14"],["3.1.3  STATIC PORT FAILURE",14,2,"14"],["3.1.4  ELECTRICAL FUEL PUMP FAILURE",15,2,"15"],["3.1.5  TRIM SYSTEM FAILURE",15,2,"15"],["3.2  ENGINE FAILURE",15,1,"15"],["3.2.1  ENGINE SECURING",15,2,"15"],["3.2.2  ENGINE FAILURE DURING TAKE-OFF RUN",15,2,"15"],["3.2.3  ENGINE FAILURE IMMEDIATELY AFTER TAKE-OFF",16,2,"16"],["3.3  ENGINE FAILURES DURING FLIGHT",16,1,"16"],["3.3.1  LOW FUEL PRESSURE",16,2,"16"],["3.3.2  OIL PRESSURE LIMITS EXCEEDANCE",16,2,"16"],["3.3.3  HIGH OIL TEMPERATURE",16,2,"16"],["3.3.4  CHT/CT LIMIT EXCEEDANCE",17,2,"17"],["3.4  IN-FLIGHT ENGINE RESTART",17,1,"17"],["3.5  SMOKE AND FIRE",17,1,"17"],["3.5.1  ENGINE FIRE ON THE GROUND",17,2,"17"],["3.5.2  ENGINE FIRE DURING TAKEOFF",18,2,"18"],["3.5.3  ENGINE FIRE IN-FLIGHT",18,2,"18"],["3.5.4  CABIN FIRE / ELECTRICAL SMOKE IN CABIN DURING FLIGHT",18,2,"18"],["3.5.5  ELECTRICAL SMOKE / FIRE IN CABIN ON THE GROUND",18,2,"18"],["3.6  LANDING EMERGENCY",19,1,"19"],["3.6.1  FORCED LANDING WITHOUT ENGINE POWER",19,2,"19"],["3.6.2  POWER-ON FORCED LANDING",19,2,"19"],["3.6.3  LANDING WITH A FLAT NOSE TIRE",19,2,"19"],["3.6.4  LANDING WITH A FLAT MAIN TIRE",19,2,"19"],["3.7  AIRPLANE EVACUATION",20,1,"20"],["3.8  RECOVERY FROM UNINTENTIONAL SPIN",20,1,"20"],["3.9  UNINTENTIONAL FLIGHT INTO ICING CONDITIONS",20,1,"20"],["3.10  G500 SYSTEM FAILURES",20,1,"20"],["4  TRAFFIC PATTERN PROCEDURES",22,0,"22"],["4.1  DEPARTURE",22,1,"22"],["4.1.1  TAKE-OFF BRIEFING",23,2,"23"],["4.2  LANDING",23,1,"23"],["4.2.1  APPROACH BRIEFING",23,2,"23"],["4.3  GO AROUND",24,1,"24"],["COCKPIT LAYOUT (FIGURE)",25,0,"25"],["TRAFFIC CIRCUIT STANDARD CALL OUT",26,0,"26"]],"em":[["3.1.1  ELECTRIC POWER SYSTEM MALFUNCTION",14,""],["3.1.2  INSTRUMENTS LIGHTS FAILURE",14,""],["3.1.3  STATIC PORT FAILURE",14,""],["3.1.4  ELECTRICAL FUEL PUMP FAILURE",15,""],["3.1.5  TRIM SYSTEM FAILURE",15,""],["3.2.1  ENGINE SECURING",15,""],["3.2.2  ENGINE FAILURE DURING TAKE-OFF RUN",15,""],["3.2.3  ENGINE FAILURE IMMEDIATELY AFTER TAKE-OFF",16,""],["3.3.1  LOW FUEL PRESSURE",16,""],["3.3.2  OIL PRESSURE LIMITS EXCEEDANCE",16,""],["3.3.3  HIGH OIL TEMPERATURE",16,""],["3.3.4  CHT/CT LIMIT EXCEEDANCE",17,""],["3.4  IN-FLIGHT ENGINE RESTART",17,""],["3.5.1  ENGINE FIRE ON THE GROUND",17,""],["3.5.2  ENGINE FIRE DURING TAKEOFF",18,""],["3.5.3  ENGINE FIRE IN-FLIGHT",18,""],["3.5.4  CABIN FIRE / ELECTRICAL SMOKE IN CABIN DURING FLIGHT",18,""],["3.5.5  ELECTRICAL SMOKE / FIRE IN CABIN ON THE GROUND",18,""],["3.6.1  FORCED LANDING WITHOUT ENGINE POWER",19,""],["3.6.2  POWER-ON FORCED LANDING",19,""],["3.6.3  LANDING WITH A FLAT NOSE TIRE",19,""],["3.6.4  LANDING WITH A FLAT MAIN TIRE",19,""],["3.7  AIRPLANE EVACUATION",20,""],["3.8  RECOVERY FROM UNINTENTIONAL SPIN",20,""],["3.9  UNINTENTIONAL FLIGHT INTO ICING CONDITIONS",20,""],["3.10  G500 SYSTEM FAILURES",20,""]]}};
 const FILES={a1:'manuales/c172.pdf',a2:'manuales/tecnam.pdf'};
-const CN='v8';
+const CN='v9';
 let names={a1:'Cessna 172S',a2:'Tecnam P2002JF'},cur,pdf,page=1,scale=1,texts=null,task,upId;
 if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='pdf.worker.min.js';
 function dbo(){return new Promise((res,rej)=>{try{const r=indexedDB.open('manuales',1);r.onupgradeneeded=()=>r.result.createObjectStore('pdf');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
@@ -121,7 +131,8 @@ async function openAc(id,bufIn,title){
     cur=id;texts=null;pdf=await pdfjsLib.getDocument(typeof buf==='string'?{url:buf,disableAutoFetch:true,disableStream:true,rangeChunkSize:131072}:{data:new Uint8Array(buf)}).promise;$('#q').value='';$('#sr').innerHTML='';
     page=id==='notam'?1:ls.get('pg_'+id,1);scale=1;$('#ttl').textContent=title||names[id];
     $('#home').style.display='none';$('#viewer').style.display='flex';
-    AIPS=id.startsWith('aip:')?Object.assign({done:true},(AIPIDX&&AIPIDX.airports[id.slice(4)])||{}):null;await render();loadOutline();
+    GACT=null;updateGbar(true);AIPS=id.startsWith('aip:')?Object.assign({done:true},(AIPIDX&&AIPIDX.airports[id.slice(4)])||{}):null;await render();loadOutline();
+    if(id.startsWith('aip:')){const ic=id.slice(4);if(!hasIdx(ls.get(aipxKey(ic),null))&&isSaved(ic))ensureAipIndex(ic).then(()=>{if(cur===id)updateGbar()}).catch(()=>{})}
   }catch(e){alert('No se pudo abrir el PDF.')}
 }
 let vz=1,vtx=0,vty=0,fitMode=ls.get('fitmode','page'),PW=1,PH=1,vf=1,vk='',pgObj=null;
@@ -147,7 +158,7 @@ async function render(){
   pgObj=pg;PW=v.width;PH=v.height;$('#pn').textContent=page+' / '+pdf.numPages;
   const key=cur+':'+page;vf=fitF();
   if(key!==vk){vk=key;vz=1;vtx=0;vty=0;clampView();newPage()}else clampView();
-  applyWorld();schedule()}
+  applyWorld();schedule();if(typeof updateGnav==='function')updateGnav()}
 async function runBase(gen){
   baseNeeded=false;const pg=pgObj;let s=vf*dprX()*1.5;const px=PW*PH*s*s;if(px>6e6)s*=Math.sqrt(6e6/px);
   const vp=pg.getViewport({scale:s}),c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(vp.width));c.height=Math.max(1,Math.ceil(vp.height));
@@ -253,7 +264,7 @@ function drawFav(){
     r.innerHTML=`<button class="it ${x.e?'em':''}" style="margin:0">${x.e?'🚨 ':''}${esc(x.l)} · p.${x.p}</button><button style="flex:0 0 48px">✕</button>`;
     r.children[0].onclick=()=>{closeP();go(x.p)};r.children[1].onclick=()=>{const g=favs();g.splice(x.i,1);ls.set('fav_'+cur,g);drawFav()};box.appendChild(r)});
 }
-const T={Out:'Índice',Search:'Buscar',Fav:'Emergencias y favoritos',Notes:'Notas',Aip:'AIP · Aeropuertos',Maps:'Cartas aeronáuticas',Calc:'Calculadoras',Links:'Más enlaces',Metar:'METAR / TAF'};
+const T={Out:'Índice',Search:'Buscar',Fav:'Emergencias y favoritos',Notes:'Notas',Aip:'AIP · Aeropuertos',Maps:'Cartas aeronáuticas',Calc:'Calculadoras',Links:'Más enlaces',Metar:'METAR / TAF',Grp:''};
 function openP(n){document.querySelectorAll('.pn').forEach(p=>p.style.display='none');$('#p'+n).style.display='block';
   $('#sht').textContent=T[n];$('#sheet').style.display='flex';
   if(n==='Fav')drawFav();if(n==='Notes')drawNotes(inViewer()?cur:null);if(n==='Metar')drawMetar();if(n==='Calc')showCalc(ls.get('ctab','d'));
@@ -343,9 +354,11 @@ $('#aq').oninput=applyFilter;
 function renderApts(){
   const idx=(AIPIDX&&AIPIDX.airports)||{},list=APTS.map(a=>({ic:a[2],t:a[0]+' · '+a[1]})),fv=aipFavs();
   Object.keys(idx).forEach(ic=>{if(!list.some(x=>x.ic===ic))list.push({ic,t:idx[ic].label||ic})});
+  const openSet=new Set([...document.querySelectorAll('#al details.ap[open]')].map(d=>d.dataset.s));
   $('#al').innerHTML=list.map(x=>{const m=idx[x.ic],sv=isSaved(x.ic),old=!sv&&(SAVEDMAP[x.ic]||[]).length>0,f=fv.includes(x.ic);
     let st=m?(sv?'✓ guardado sin conexión':old?'⚠️ guardado de un ciclo anterior':'En línea')+' · '+mb(m.size)+(f?' · ⭐':''):'— no disponible en este ciclo';
     return `<details class="ap" data-s="${(x.t+' '+x.ic).toLowerCase()}"><summary>${x.t} — ${x.ic}<br><span class="s">${st}</span></summary>${m?`<div class="row"><button class="p" data-aip="${x.ic}">📘 Abrir AIP</button><button data-fav="${x.ic}">${f?'⭐ Quitar favorito':'☆ Favorito'}</button></div><div class="row"><button data-sv="${x.ic}">${sv?'🗑️ Quitar copia guardada':'⬇️ Guardar sin conexión'}</button></div>`:''}</details>`}).join('');
+  document.querySelectorAll('#al details.ap').forEach(d=>{if(openSet.has(d.dataset.s))d.open=true});
   const I=AIPIDX;
   if(I){let d=I.eff;try{d=new Date(I.eff+'T12:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})}catch(e){}
     const stale=fv.filter(ic=>idx[ic]&&(SAVEDMAP[ic]||[]).length&&!isSaved(ic));
@@ -359,7 +372,7 @@ function renderApts(){
 async function loadAipIndex(){
   let j=null;try{const r=await fetchT(WORKER+'/aip/index.json',8000);if(r.ok){j=await r.json();if(j&&j.files)ls.set('aip_idx',j);else j=null}}catch(e){}
   if(!j)j=ls.get('aip_idx',null);
-  AIPIDX=j&&j.files?buildAipIdx(j):null;await refreshSaved();renderApts();setTimeout(()=>autoSync(false),2500)}
+  AIPIDX=j&&j.files?buildAipIdx(j):null;await refreshSaved();renderApts();setTimeout(()=>autoSync(false),2500);setTimeout(indexSaved,4000)}
 async function saveAip(ic){
   const m=AIPIDX&&AIPIDX.airports[ic];if(!m)return;const url=aipUrl(m),c=await caches.open(AIPC);
   const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
@@ -375,7 +388,7 @@ $('#al').addEventListener('click',async e=>{
     if(isSaved(ic)){await delAip(ic);await refreshSaved();renderApts();st.textContent='Copia de '+ic+' eliminada.';return}
     if(!navigator.onLine){st.textContent='Necesitas internet para guardar.';return}
     b.disabled=true;st.textContent='Guardando '+ic+'… puede tardar según el tamaño.';
-    try{await saveAip(ic);st.textContent=ic+' guardado para uso sin conexión.'}catch(x){st.textContent='No se pudo guardar '+ic+'. Revisa tu conexión o el espacio del iPad.'}
+    try{await saveAip(ic);await refreshSaved();st.textContent='Creando índice de cartas de '+ic+'…';try{await ensureAipIndex(ic)}catch(x){}st.textContent=ic+' guardado para uso sin conexión.'}catch(x){st.textContent='No se pudo guardar '+ic+'. Revisa tu conexión o el espacio del iPad.'}
     await refreshSaved();renderApts()}
 });
 $('#aipdl').onclick=()=>{if(!AIPIDX){syncMsg('No hay lista del AIP. Conéctate a internet.');return}if(!navigator.onLine){syncMsg('Necesitas internet para guardar.');return}autoSync(true)};
@@ -411,7 +424,7 @@ async function autoSync(force){
     for(const ic of todo){
       if(!navigator.onLine)break;
       syncMsg('⬇️ Guardando AIP '+ic+' ('+(n+1)+'/'+total+')… no cierres la app');
-      try{await saveAip(ic);fails=0}catch(e){fails++;if(e&&e.name==='QuotaExceededError'){noSpace=true;break}if(fails>=3)break}
+      try{await saveAip(ic);fails=0;await refreshSaved();try{await ensureAipIndex(ic,(i,n)=>syncMsg('Creando índice de cartas: '+ic+' '+i+'/'+n))}catch(x){}}catch(e){fails++;if(e&&e.name==='QuotaExceededError'){noSpace=true;break}if(fails>=3)break}
       n++;await refreshSaved();renderApts()}
     for(const m of cp){
       if(!navigator.onLine||fails>=3)break;
@@ -421,7 +434,7 @@ async function autoSync(force){
     const left=wantedList().filter(ic=>!isSaved(ic)).length;
     syncMsg(left?(noSpace?'⚠️ El dispositivo se quedó sin espacio: faltan '+left+' AIP. Libera espacio o elige «Favoritos».':'Quedan '+left+' AIP por guardar. Se continuará al abrir la app con internet.'):'✓ Todo guardado para uso sin conexión.');
     if(!left)ls.set('sync_t',Date.now());
-  }finally{syncing=false;await refreshSaved();renderApts()}
+  }finally{syncing=false;await refreshSaved();renderApts();indexSaved()}
 }
 window.addEventListener('online',()=>setTimeout(()=>autoSync(false),1500));
 $('#aipmode').onclick=e=>{const b=e.target.closest('button[data-m]');if(!b)return;ls.set('aip_mode',b.dataset.m);renderApts();autoSync(true)};
@@ -436,16 +449,118 @@ const aipxKey=ic=>{const m=AIPIDX&&AIPIDX.airports[ic];return 'aipx_'+ic+'_'+(m?
 async function makeAipIndex(ic,box){
   const st=$('#mkst'),b=$('#mkidx');b.disabled=true;const T=[];
   try{for(let i=1;i<=pdf.numPages;i++){if(cur!=='aip:'+ic)return;const pg=await pdf.getPage(i),tc=await pg.getTextContent();T.push(tc.items.map(x=>x.str).join(' ').replace(/\s+/g,' '));pg.cleanup();if(i%5===0||i===pdf.numPages)st.textContent='Leyendo página '+i+' de '+pdf.numPages+'…'}
-    const r=parseAip(T);ls.set(aipxKey(ic),{info:r.info,ch:r.ch,idx:r.idx,pages:T.length});drawAipOutline(box)}
+    ls.set(aipxKey(ic),buildAipData(T));drawAipOutline(box);updateGbar()}
   catch(e){b.disabled=false;st.textContent='No pude leer todo el PDF. Revisa tu conexión e inténtalo de nuevo.'}}
 function drawAipOutline(box){
   box.innerHTML='';const ic=cur.slice(4),d=ls.get(aipxKey(ic),null);
-  if(!d){box.innerHTML='<p class="s">Este AIP todavía no tiene índice de hojas. Se crea leyendo el PDF completo una sola vez (puede tardar y gastar datos si no está guardado sin conexión).</p><div class="row"><button class="p" id="mkidx">Crear índice de hojas</button></div><div id="mkst" class="s"></div>';$('#mkidx').onclick=()=>makeAipIndex(ic,box);return}
-  const mk=(t,p)=>{const b=document.createElement('button');b.className='it';b.textContent=t+' · p.'+p;b.onclick=()=>{closeP();go(p)};box.appendChild(b)};
-  if(d.info&&d.info.length){box.insertAdjacentHTML('beforeend','<p class="s"><b>Información del aeródromo</b></p>');d.info.slice().sort((a,b)=>a[0]-b[0]).forEach(x=>mk('AD 2.'+x[0]+' '+x[1],x[2]))}
-  for(const c of AIPCATS){const a=d.ch&&d.ch[c];if(a&&a.length){box.insertAdjacentHTML('beforeend','<p class="s"><b>'+c+'</b></p>');a.forEach(x=>mk(x[0],x[1]))}}
-  if(!(d.info&&d.info.length)&&!Object.keys(d.ch||{}).length)box.insertAdjacentHTML('beforeend','<p class="s">No pude organizar las hojas de este PDF. Usa el buscador o el salto por página.</p>');
+  if(!hasIdx(d)){box.innerHTML='<p class="s">Este AIP todavía no tiene índice de cartas. Se crea leyendo el PDF completo una sola vez (puede tardar y gastar datos si no está guardado sin conexión).</p><div class="row"><button class="p" id="mkidx">Crear índice de cartas</button></div><div id="mkst" class="s"></div>';$('#mkidx').onclick=()=>makeAipIndex(ic,box);return}
+  const mk=(t,p)=>{const b=document.createElement('button');b.className='it ob';const s1=document.createElement('span'),g=document.createElement('span');s1.textContent=t;g.className='pg';g.textContent='p.'+p;b.append(s1,g);b.onclick=()=>{closeP();go(p)};box.appendChild(b)};
+  gGroups(d).forEach(g=>{box.insertAdjacentHTML('beforeend','<p class="s"><b>'+g.label+'</b></p>');g.items.forEach(x=>mk(x[0],x[1]))});
+  if(d.info&&d.info.length){box.insertAdjacentHTML('beforeend','<p class="s"><b>Información del aeródromo (AD 2.x)</b></p>');d.info.slice().sort((a,b)=>a[0]-b[0]).forEach(x=>mk('AD 2.'+x[0]+' '+x[1],x[2]))}
 }
+/* ===== Índice de cartas del AIP por grupos (franja de botones + flechas) ===== */
+const GDEF=[['geo','Datos geográficos','Datos geográficos'],['tz','Zona de entrenamiento','Entrenamiento'],['circ','Circuito de aeródromo','Circuito'],['ctr','Zona de control','Zona de control'],['adc','Plano de aeródromo','Plano'],['ama','Altitudes mínimas de área','Alt. mín. área'],['vec','Altitudes mínimas de vectorización','Alt. mín. vectorización'],['sid','SID','SID'],['star','STAR','STAR'],['iac','IAC','IAC'],['vis','Carta de visibilidad','Visibilidad'],['fam','Carta de familiarización visual','Familiarización visual'],['otr','Otras cartas','Otras cartas']];
+const DSH='-\u00ad\u2010-\u2015';
+const KWS=[['tz',/training\s*zones?/gi],['circ',/aerodrome\s+circuit/gi],['ctr',/control\s*zone/gi],['adc',/aerodrome\s*heliport\s*chart/gi],
+ ['ama',/(?:minimum\s+area\s+altitudes?|area\s+minimum\s+altitudes?)/gi],['vec',/(?:minimum\s+vectoring\s+altitudes?|surveillance\s+minimum\s+altitude)/gi],
+ ['sid',new RegExp('\\bSID\\s*['+DSH+']?\\s*ICAO','gi')],['star',new RegExp('\\bSTAR\\s*['+DSH+']?\\s*ICAO','gi')],['iac',new RegExp('\\bIAC\\s*['+DSH+']?\\s*ICAO','gi')],
+ ['vis',/visibility\s*chart/gi],['fam',/visual\s*familiari[sz]ation/gi],
+ ['otr',new RegExp('\\bVAC\\s*['+DSH+']?\\s*ICAO','gi')],['otr',new RegExp('\\bRVFP\\s*['+DSH+']?\\s*ICAO','gi')],['otr',/aircraft\s+parking\s+docking\s+chart/gi],
+ ['otr',/aerodrome\s+obstacle\s+chart/gi],['otr',/aerodrome\s+ground\s+movement\s+chart/gi],['otr',/wpt\s+coordinates/gi],['otr',/spots\s+chart/gi],
+ ['otr',/vfr\s+overfl/gi],['otr',/aerodrome\s+precision\s+approach/gi],['otr',/helicopter\s+proc/gi]];
+const PGRE=new RegExp('AD\\s*2\\s*SK[A-Z]{2}\\s*['+DSH+']?\\s*(\\d+)(?![\\d.])','g');
+function cleanTitle(t){
+  t=t.replace(/\s+/g,' ').replace(new RegExp('\\s*['+DSH+']?\\s*ICAO\\b\\s*['+DSH+']?\\s*','i'),' · ');
+  t=t.replace(new RegExp('\\s*['+DSH+']\\s*','g'),' ').replace(/(?:\s*·\s*)+$/,'').replace(/\.pdf\b/gi,'').replace(/\s+/g,' ').trim();
+  return t.length>90?t.slice(0,88)+'…':t}
+// T = texto de cada página (ya sin espacios repetidos). Devuelve {geo, groups:{id:[[título,páginaPDF],…]}}
+function parseCharts(T){
+  const pn={},pnOf={};
+  const HRE=new RegExp('AIP\\s+(?:COLOMBIA\\s+)?AD\\s*2\\s*SK[A-Z]{2}\\s*['+DSH+']?\\s*(\\d+)(?![\\d.])');
+  T.forEach((t,i)=>{const m=t.match(HRE);if(m){const n=+m[1];if(!(n in pn))pn[n]=i+1;pnOf[i]=n}});
+  const i24=T.findIndex(t=>/AD\s*2\.24/.test(t));
+  const out={geo:0,groups:{}};
+  const gi=T.findIndex(t=>/AD\s*2\.2\s+DATOS\s+GEOGR/i.test(t));if(gi>=0)out.geo=gi+1;
+  if(i24<0)return out;
+  let sec=T.slice(i24,i24+4).join(' ');
+  const k=sec.indexOf('CHARTS RELATED TO AN AERODROME');if(k>=0)sec=sec.slice(k+30);
+  for(const c of ['RUTAS NORMALIZADAS','La siguiente informaci','ZONAS DE ENTRENAMIENTO TRAINING ZONES','CIRCUITO DE TRANSITO DE AER']){const j=sec.indexOf(c);if(j>0)sec=sec.slice(0,j)}
+  sec=sec.replace(new RegExp('AIP\\s+COLOMBIA\\s+AD\\s*2\\s*SK[A-Z]{2}\\s*['+DSH+']?\\s*\\d+\\s*(?:AIRAC effective date|\\d{1,2} [A-Z]{3} \\d{4})[^A-Za-z]*(?:AIRAC effective date \\d+ [A-Z]+ \\d+)?(?:\\s*AIS COLOMBIA A \\d+/\\d+)?','g'),'')
+    .replace(new RegExp('(?:AIP\\s+)?AIS COLOMBIA A \\d+/\\d+\\s+AIP\\s+AD\\s*2\\s*SK[A-Z]{2}\\s*['+DSH+']?\\s*\\d+\\s*COLOMBIA\\s+(?:AIRAC effective date )?\\d+ [A-Z]+ \\d+','g'),'')
+    .replace(/AIRAC effective date \d+ [A-Z]+ \d+/g,'').replace(/AIS COLOMBIA A \d+\/\d+(\s+AIP)?/g,'').replace(/COLOMBIA\s+\d{1,2} [A-Z]{3} \d{4}/g,'').replace(/Charts Pages/g,'');
+  const ev=[];
+  for(const [g,re] of KWS){re.lastIndex=0;let m;while((m=re.exec(sec)))ev.push({pos:m.index,t:'k',g,end:m.index+m[0].length})}
+  { const re=new RegExp(PGRE.source,'g');let m;while((m=re.exec(sec)))ev.push({pos:m.index,t:'p',n:+m[1],end:m.index+m[0].length}) }
+  ev.sort((a,b)=>a.pos-b.pos||(a.t==='p'?-1:1));
+  const minP=(pnOf[i24]||0),seen=new Set();
+  for(let i=0;i<ev.length;i++){
+    if(ev[i].t!=='k')continue;
+    let j=i+1,pg=null;while(j<ev.length){if(ev[j].t==='p'){pg=ev[j];break}if(ev[j].t==='k'&&ev[j].pos>=ev[i].end)break;j++}
+    if(!pg)continue;
+    let nx=ev.slice(j+1).find(e=>e.t==='k');const end=nx?nx.pos:sec.length;
+    const title=cleanTitle(sec.slice(ev[i].pos,pg.pos)+' '+sec.slice(pg.end,end));
+    const pdf=pn[pg.n];if(!pdf||pg.n<=minP)continue;
+    const key=ev[i].g+'|'+pdf;if(seen.has(key))continue;seen.add(key);
+    (out.groups[ev[i].g]=out.groups[ev[i].g]||[]).push([title,pdf])}
+  for(const g in out.groups)out.groups[g].sort((a,b)=>a[1]-b[1]);
+  return out}
+async function readTexts(src,prog){
+  const doc=await pdfjsLib.getDocument(typeof src==='string'?{url:src,disableAutoFetch:true,disableStream:true,rangeChunkSize:262144}:{data:new Uint8Array(src)}).promise;
+  const T=[];
+  try{for(let i=1;i<=doc.numPages;i++){const pg=await doc.getPage(i),tc=await pg.getTextContent();T.push(tc.items.map(x=>x.str).join(' ').replace(/\s+/g,' '));pg.cleanup();if(prog&&(i%5===0||i===doc.numPages))prog(i,doc.numPages)}}
+  finally{try{doc.destroy()}catch(e){}}
+  return T}
+function buildAipData(T){const r=parseAip(T),c=parseCharts(T);let geo=c.geo;if(!geo){const g=(r.info||[]).find(x=>x[0]===2);if(g)geo=g[2]}return {v2:1,info:r.info,ch:r.ch,idx:r.idx,geo,groups:c.groups,pages:T.length}}
+const hasIdx=d=>!!(d&&d.v2);
+let indexing=false;
+async function ensureAipIndex(ic,prog){
+  const m=AIPIDX&&AIPIDX.airports[ic];if(!m)return null;const key=aipxKey(ic);let d=ls.get(key,null);if(hasIdx(d))return d;
+  if(!isSaved(ic))return null;
+  const T=await readTexts(aipUrl(m),prog);d=buildAipData(T);ls.set(key,d);return d}
+async function indexSaved(){
+  if(indexing||!AIPIDX)return;indexing=true;
+  try{for(const ic of Object.keys(AIPIDX.airports)){
+    if(!isSaved(ic)||hasIdx(ls.get(aipxKey(ic),null)))continue;
+    const note=ic+' ('+(AIPIDX.airports[ic].label||'')+')';
+    try{await ensureAipIndex(ic,(i,n)=>{if(!syncing)syncMsg('Creando índice de cartas: '+ic+' '+i+'/'+n)})}catch(e){}
+    if(cur==='aip:'+ic)updateGbar()}
+    if(!syncing)syncMsg('')}
+  finally{indexing=false}}
+/* --- franja de botones --- */
+let GCUR=[],GACT=null;
+function gGroups(d){const o=[];GDEF.forEach(([id,label,short])=>{const items=id==='geo'?(d&&d.geo?[['Datos geográficos · AD 2.2',d.geo]]:null):(d&&d.groups&&d.groups[id]);if(items&&items.length)o.push({id,label,short,items})});return o}
+function updateGbar(quiet){
+  const bar=$('#gbar'),on=cur&&cur.startsWith('aip:');let html='';GCUR=[];
+  if(on){const ic=cur.slice(4),d=ls.get(aipxKey(ic),null);
+    if(hasIdx(d)){GCUR=gGroups(d);html=GCUR.map(g=>'<button class="chip'+(GACT&&GACT.g.id===g.id?' on':'')+'" data-g="'+g.id+'">'+g.short+'</button>').join('')}
+    else if(isSaved(ic))html='<span class="s" style="padding:8px 4px">⏳ Creando índice de cartas…</span>';
+    else html='<button class="chip" data-g="mk">📑 Crear índice de cartas</button>'}
+  const was=bar.classList.contains('on');bar.innerHTML=html;bar.classList.toggle('on',on&&!!html);
+  if(!quiet&&was!==bar.classList.contains('on')&&pdf&&inViewer())window.dispatchEvent(new Event('resize'));
+  updateGnav()}
+function updateGnav(){
+  const n=$('#gnav');if(!n)return;
+  if(!GACT||!GACT.g||GACT.g.items.length<2||!cur||!cur.startsWith('aip:')){n.classList.remove('on');return}
+  const it=GACT.g.items;let idx=-1;it.forEach((x,i)=>{if(x[1]<=page)idx=i});
+  $('#glb').textContent=GACT.g.short+' '+(idx<0?'–':(idx+1))+'/'+it.length;n.classList.add('on')}
+function gotoGroup(g,i){GACT={g};closeP();go(g.items[i][1]);updateGbar()}
+function gStep(dir){
+  if(!GACT)return;const it=GACT.g.items;let t=null;
+  if(dir>0)t=it.find(x=>x[1]>page);else for(let i=it.length-1;i>=0;i--)if(it[i][1]<page){t=it[i];break}
+  if(t)go(t[1])}
+$('#gbar').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-g]');if(!b)return;const id=b.dataset.g;
+  if(id==='mk'){const ic=cur.slice(4),m=AIPIDX&&AIPIDX.airports[ic];if(!m)return;
+    if(!navigator.onLine){alert('Necesitas internet para guardar este aeropuerto y crear su índice.');return}
+    if(!confirm('Para crear el índice se guardará este aeropuerto sin conexión (≈'+mb(m.size)+'). ¿Continuar?'))return;
+    b.textContent='⏳ Guardando…';try{await saveAip(ic);await refreshSaved();updateGbar();await ensureAipIndex(ic)}catch(x){alert('No se pudo guardar el aeropuerto.')}
+    renderApts();updateGbar();return}
+  const g=GCUR.find(x=>x.id===id);if(!g)return;
+  if(g.items.length===1){gotoGroup(g,0);return}
+  $('#pGrp').innerHTML='<p class="s">'+g.label+' · '+g.items.length+' cartas</p>'+g.items.map((x,i)=>'<button class="it ob" data-i="'+i+'"><span>'+esc(x[0])+'</span><span class="pg">p.'+x[1]+'</span></button>').join('');
+  $('#pGrp').dataset.g=id;T.Grp=g.label;openP('Grp')});
+$('#pGrp').addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(!b)return;const g=GCUR.find(x=>x.id===$('#pGrp').dataset.g);if(g)gotoGroup(g,+b.dataset.i)});
+$('#gpv').onclick=()=>gStep(-1);$('#gnx').onclick=()=>gStep(1);$('#gx').onclick=()=>{GACT=null;updateGbar()};
 loadAipIndex();
 async function openNotam(){
   const b=$('#bn');b.textContent='Descargando…';let buf=null,upd='',live=false;
