@@ -1,4 +1,4 @@
-const V='v15',AC='aip-offline',CORE=['./','index.html','manifest.json','pdf.min.js','pdf.worker.min.js','manuales/c172.pdf','manuales/tecnam.pdf','icon-180.png'];
+const V='v16',AC='aip-offline',CORE=['./','index.html','manifest.json','pdf.min.js','pdf.worker.min.js','manuales/c172.pdf','manuales/tecnam.pdf','icon-180.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==AC).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET')return;
